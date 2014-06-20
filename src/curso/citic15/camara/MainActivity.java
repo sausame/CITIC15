@@ -15,43 +15,53 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.ShutterCallback, Camera.PictureCallback {
-	
+public class MainActivity extends Activity implements SurfaceHolder.Callback,
+		Camera.ShutterCallback, Camera.PictureCallback, Camera.PreviewCallback {
+
 	private SurfaceView preview;
 	Camera camera;
 	Bitmap photo;
-	
+	BitmapSurfaceView bsv = null;
+	CanvasView cv = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		FrameLayout surfaceViewFrame = (FrameLayout) findViewById(R.id.surfaceviewFrame);
+		cv = new CanvasView(this);
+//		surfaceViewFrame.addView(cv);
 		
-		preview = (SurfaceView)findViewById(R.id.surfCamara);
+		bsv = (BitmapSurfaceView) findViewById(R.id.surfOther);
+		
+		preview = (SurfaceView) findViewById(R.id.surfCamara);
 		preview.getHolder().addCallback(this);
-		
-		Button shutter = (Button)findViewById(R.id.button1);
-		shutter.setOnClickListener( new OnClickListener() {			
+		Button shutter = (Button) findViewById(R.id.button1);
+		shutter.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				camera.takePicture(MainActivity.this, null, null, MainActivity.this);
+				camera.takePicture(MainActivity.this, null, null,
+						MainActivity.this);
 			}
 		});
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		camera.release();
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
 		camera.stopPreview();
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -62,11 +72,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	@Override
 	public void onShutter() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+	public void surfaceChanged(SurfaceHolder holder, int format, int width,
+			int height) {
 		if (camera != null) {
 			Camera.Parameters params = camera.getParameters();
 			List<Camera.Size> sizes = params.getSupportedPreviewSizes();
@@ -74,17 +85,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			params.setPreviewSize(selected.width, selected.height);
 			camera.setParameters(params);
 			camera.setDisplayOrientation(90);
-			
-			
+
 			try {
 				camera.setPreviewDisplay(holder);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			camera.startPreview();
 		} else {
-			Toast.makeText(this, "No hay camara o hay algœn error.", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "No hay camara o hay algï¿½n error.",
+					Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -100,12 +111,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	@Override
 	public void onPictureTaken(byte[] data, Camera camera) {
+		if (null != bsv) bsv.dummyRender();
 		BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inSampleSize = 6;
-		
+
 		photo = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-		
+
 		camera.startPreview();
+	}
+
+	@Override
+	public void onPreviewFrame(byte[] arg0, Camera arg1) {
+		if (null != bsv) bsv.dummyRender();
+		
 	}
 
 }

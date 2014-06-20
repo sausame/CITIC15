@@ -6,20 +6,32 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+        android:background="@android:color/black"
     tools:context=".MainActivity" >
 
+    <FrameLayout
+        android:id="@+id/surfaceviewFrame"
+        android:layout_alignParentBottom="true"
+        android:layout_width="200dp"
+        android:layout_height="200dp" >
+
+         <curso.citic15.camara.BitmapSurfaceView
+            android:id="@+id/surfOther"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+    
     <SurfaceView
         android:id="@+id/surfCamara"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="450dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" />
-
     <Button
         android:id="@+id/button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/surfCamara"
+        android:layout_alignBottom="@+id/surfaceviewFrame"
         android:layout_centerHorizontal="true"
         android:text="@string/photo" />
 
