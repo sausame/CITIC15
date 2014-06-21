@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.hardware.Camera.Size;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,8 +25,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 	private SurfaceView preview;
 	Camera camera;
 	Bitmap photo;
-	BitmapSurfaceView bsv = null;
+	BitmapSurfaceView bsv1 = null;
+	BitmapSurfaceView bsv2 = null;
 	CanvasView cv = null;
+	YuvToRgbHelper mYuvToRgbHelper = new YuvToRgbHelper();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +37,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
 		FrameLayout surfaceViewFrame = (FrameLayout) findViewById(R.id.surfaceviewFrame);
 		cv = new CanvasView(this);
-//		surfaceViewFrame.addView(cv);
-		
-		bsv = (BitmapSurfaceView) findViewById(R.id.surfOther);
-		
+		// surfaceViewFrame.addView(cv);
+
+		bsv1 = (BitmapSurfaceView) findViewById(R.id.bsv1);
+		bsv2 = (BitmapSurfaceView) findViewById(R.id.bsv2);
+
 		preview = (SurfaceView) findViewById(R.id.surfCamara);
 		preview.getHolder().addCallback(this);
 		Button shutter = (Button) findViewById(R.id.button1);
@@ -84,7 +88,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 			Camera.Size selected = sizes.get(0);
 			params.setPreviewSize(selected.width, selected.height);
 			camera.setParameters(params);
-			camera.setDisplayOrientation(90);
+			camera.setDisplayOrientation(90); // Back Camera: 90
+			camera.setPreviewCallback(this);
 
 			try {
 				camera.setPreviewDisplay(holder);
@@ -101,7 +106,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-		camera = Camera.open();
+		camera = Camera.open(1);
 	}
 
 	@Override
@@ -111,7 +116,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
 	@Override
 	public void onPictureTaken(byte[] data, Camera camera) {
-		if (null != bsv) bsv.dummyRender();
 		BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inSampleSize = 6;
 
@@ -121,9 +125,36 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 	}
 
 	@Override
-	public void onPreviewFrame(byte[] arg0, Camera arg1) {
-		if (null != bsv) bsv.dummyRender();
-		
+	public void onPreviewFrame(byte[] frameByte, Camera camera) {
+		if (!mYuvToRgbHelper.isInitialized()) {
+
+			Camera.Parameters p = camera.getParameters();
+			Size previewSize = p.getPreviewSize();
+
+			mYuvToRgbHelper.setWidth(previewSize.width);
+			mYuvToRgbHelper.setHeight(previewSize.height);
+			mYuvToRgbHelper.setLength(frameByte.length);
+			mYuvToRgbHelper.setContext(this);
+
+			mYuvToRgbHelper.init();
+		}
+
+		Bitmap bm = mYuvToRgbHelper.getOutputBitmap();
+
+		if (null != bm) {
+//			Log.e("", "Bitmap: " + bm);
+			if (null != bsv1) {
+				bsv1.render(bm);
+//				bsv1.dummyRender();
+			}
+
+			if (null != bsv2) {
+				bsv2.render(bm);
+//				 bsv2.dummyRender();
+			}
+		}
+
+		mYuvToRgbHelper.input(frameByte);
 	}
 
 }

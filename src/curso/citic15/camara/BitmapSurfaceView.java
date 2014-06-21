@@ -40,12 +40,12 @@ public class BitmapSurfaceView extends SurfaceView implements
 
 	@Override
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-		dummyRender();
+
 	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder arg0) {
-
+//		dummyRender();
 	}
 
 	@Override
