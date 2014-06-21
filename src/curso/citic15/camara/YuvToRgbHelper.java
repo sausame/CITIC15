@@ -8,14 +8,13 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
-import android.graphics.Canvas;
 import android.graphics.ImageFormat;
-import android.os.Build;
+import android.graphics.Matrix;
 import android.os.Environment;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
@@ -27,6 +26,8 @@ import android.util.Log;
 public class YuvToRgbHelper extends Thread {
 	private static final String TAG = "YuvToRgbHelper";
 
+	private static final boolean IS_TO_DUMP = false;
+
 	private static final int INVALID_INT = -1;
 
 	private int mWidth = INVALID_INT;
@@ -35,20 +36,25 @@ public class YuvToRgbHelper extends Thread {
 
 	private boolean mIsInitialized = false;
 
+	private Matrix mMatrix = null;
+
+	private Bitmap mBitmap = null;
+	private Bitmap mOutputBitmap = null;
+
+	/** Scripts **/
+	private RenderScript mRenderScript = null;
+	private ScriptIntrinsicYuvToRGB mScript = null;
+
 	/** RenderScript buffers **/
 	private Allocation mInput = null;
 	private Allocation mOutput = null;
-	private Bitmap mBitmap = null;
-	private RenderScript mRenderScript = null;
-	private ScriptIntrinsicYuvToRGB mScript = null;
-	private byte mYuv[] = null;
-
-	private boolean mIsReading = false;
 
 	private boolean mIsTransforming = false;
 	private boolean mIsStopping = false;
 
 	private Context mContext = null;
+
+	private byte mYuv[] = null;
 
 	public void setWidth(int width) {
 		mWidth = width;
@@ -64,6 +70,12 @@ public class YuvToRgbHelper extends Thread {
 
 	public void setContext(Context ctx) {
 		mContext = ctx;
+	}
+
+	public void setRotation(int degree) {
+		mMatrix = new Matrix();
+
+		mMatrix.postRotate(degree);
 	}
 
 	public boolean isInitialized() {
@@ -144,13 +156,16 @@ public class YuvToRgbHelper extends Thread {
 				return;
 		}
 
-		mYuv = Arrays.copyOf(buffer, buffer.length);
+		if (IS_TO_DUMP) {
+			mYuv = Arrays.copyOf(buffer, buffer.length);
+		}
+
 		mInput.copyFrom(buffer);
 
 		synchronized (this) {
 			mIsTransforming = true;
 
-			notifyAll(); // Tell saver thread there is new work to do.
+			notifyAll(); // Tell the thread there is new work to do.
 		}
 	}
 
@@ -159,19 +174,30 @@ public class YuvToRgbHelper extends Thread {
 			if (mIsTransforming)
 				return null;
 
-			return mBitmap;
+			return mOutputBitmap;
 		}
 	}
 
 	private void transform() {
-		Log.e(TAG, "Starting a transform");
+		// Starting a transform.
+
 		mScript.setInput(mInput);
 		mScript.forEach(mOutput);
 
 		mOutput.copyTo(mBitmap);
-		Log.e(TAG, "A transform is completed");
 
-		saveBitmap(mBitmap, mYuv);
+		if (null != mMatrix) {
+			mOutputBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
+					mBitmap.getWidth(), mBitmap.getHeight(), mMatrix, true);
+		} else {
+			mOutputBitmap = mBitmap;
+		}
+
+		if (IS_TO_DUMP) {
+			saveBitmap(mBitmap, mYuv);
+		}
+
+		// A transform is completed.
 
 		synchronized (this) {
 			mIsTransforming = false;
@@ -181,32 +207,22 @@ public class YuvToRgbHelper extends Thread {
 	// Runs in saver thread
 	@Override
 	public void run() {
-		// initParams();
-		while (true) {
+		while (!mIsStopping) {
 			synchronized (this) {
-				while (!mIsTransforming) {
-					notifyAll(); // notify main thread in waitDone
-
-					// Note that we can only stop after we saved all images
-					// in the queue.
-					if (mIsStopping)
-						break;
-
+				while (!mIsTransforming && !mIsStopping) {
 					try {
 						wait();
 					} catch (InterruptedException ex) {
 						// ignore.
 					}
-
-					continue;
 				}
 			}
 
 			transform();
-
-			synchronized (this) {
-				notifyAll(); // the main thread may wait in addImage
-			}
+		}
+		
+		synchronized (this) {
+			notifyAll(); // notify main thread in waitDone
 		}
 	}
 
@@ -225,6 +241,9 @@ public class YuvToRgbHelper extends Thread {
 		}
 	}
 
+	// -----------------------------------------------------------------------
+	// Dummy
+	// -----------------------------------------------------------------------
 	private static void saveBitmap(Bitmap bm, byte[] yuvs) {
 		File path = Environment.getExternalStorageDirectory();
 		File yuv2rgbDir = new File(path + "/Yub2Rgb");
@@ -241,9 +260,9 @@ public class YuvToRgbHelper extends Thread {
 		writeFile(fileName + ".yuv", yuvs);
 	}
 
-	private static void saveBitmap(String file, Bitmap bm) {
+	private static void saveBitmap(String fileName, Bitmap bm) {
 		try {
-			FileOutputStream fos = new FileOutputStream(new File(file));
+			FileOutputStream fos = new FileOutputStream(new File(fileName));
 			bm.compress(CompressFormat.JPEG, 100, fos);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -266,7 +285,6 @@ public class YuvToRgbHelper extends Thread {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 }

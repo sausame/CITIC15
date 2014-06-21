@@ -2,39 +2,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
     <curso.citic15.camara.BitmapSurfaceView
         android:id="@+id/bsv1"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:layout_alignParentBottom="true" />
-
-    <curso.citic15.camara.BitmapSurfaceView
-        android:id="@+id/bsv2"
         android:layout_width="100dp"
         android:layout_height="150dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true" />
-
-    <SurfaceView
-        android:id="@+id/surfCamara"
-        android:layout_width="match_parent"
-        android:layout_height="450dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" />
 
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/surfaceviewFrame"
-        android:layout_centerHorizontal="true"
-        android:text="@string/photo" />
+    <curso.citic15.camara.BitmapSurfaceView
+        android:id="@+id/bsv2"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true" />
+
+    <curso.citic15.camara.CameraSurfaceView
+        android:id="@+id/surfCamara"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" />
 
 </RelativeLayout>
