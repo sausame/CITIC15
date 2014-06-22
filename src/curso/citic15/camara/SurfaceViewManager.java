@@ -8,6 +8,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.Size;
 
 public class SurfaceViewManager implements Camera.PreviewCallback {
+	private static final String TAG = "SurfaceViewManager";
 
 	private Context mContext;
 	private ArrayList<BitmapSurfaceView> mSurfaceViewList = new ArrayList<BitmapSurfaceView>();

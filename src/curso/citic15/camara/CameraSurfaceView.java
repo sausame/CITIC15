@@ -10,6 +10,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+
+	private final static String TAG = "CameraSurfaceView";
 	
 	private Camera.PreviewCallback mPreviewCallback = null;
 	private Camera mCamera;
@@ -35,11 +37,29 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
+		Log.v(TAG, "Surface " + this + " is created.");
 		mCamera = Camera.open(1);
+		
+		Camera.Parameters params = mCamera.getParameters();
+		List<Camera.Size> sizes = params.getSupportedPreviewSizes();
+		Camera.Size selected = sizes.get(0);
+		params.setPreviewSize(selected.width, selected.height);
+		mCamera.setParameters(params);
+		mCamera.setDisplayOrientation(90); // Front Camera: 90
+		mCamera.setPreviewCallback(mPreviewCallback);
+
+		try {
+			mCamera.setPreviewDisplay(holder);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		mCamera.startPreview();
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.v(TAG, "Surface " + this + " is destroyed.");
 		mCamera.stopPreview();
 		mCamera.release();
 		mCamera = null;
@@ -48,20 +68,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
-			Camera.Parameters params = mCamera.getParameters();
-			List<Camera.Size> sizes = params.getSupportedPreviewSizes();
-			Camera.Size selected = sizes.get(0);
-			params.setPreviewSize(selected.width, selected.height);
-			mCamera.setParameters(params);
-			mCamera.setDisplayOrientation(90); // Front Camera: 90
-			mCamera.setPreviewCallback(mPreviewCallback);
-
-			try {
-				mCamera.setPreviewDisplay(holder);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			mCamera.startPreview();
+		Log.v(TAG, "Surface " + this + " is changed.");
 	}
 }

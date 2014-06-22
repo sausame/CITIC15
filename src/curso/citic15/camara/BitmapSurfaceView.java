@@ -10,7 +10,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -22,51 +21,72 @@ public class BitmapSurfaceView extends SurfaceView implements
 		SurfaceHolder.Callback {
 	private final static String TAG = "BitmapSurfaceView";
 
+	private boolean mIsReady = false;
+
 	public BitmapSurfaceView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		getHolder().addCallback(this);
+		init();
 	}
 
 	public BitmapSurfaceView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		getHolder().addCallback(this);
+		init();
 	}
 
 	public BitmapSurfaceView(Context context) {
 		super(context);
+		init();
+	}
+	
+	private void init() {
 		getHolder().addCallback(this);
+		setZOrderOnTop(true);
 	}
 
 	@Override
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-
+		Log.v(TAG, "Surface " + this + " is changed.");
 	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder arg0) {
+		Log.v(TAG, "Surface " + this + " is created.");
+		synchronized (this) {
+			mIsReady = true;
+		}
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder arg0) {
-
+		Log.v(TAG, "Surface " + this + " is destroyed.");
+		synchronized (this) {
+			mIsReady = false;
+		}
 	}
 
 	public void render(Bitmap bm) {
-		Rect dest = new Rect(0, 0, getWidth(), getHeight());
-		Paint paint = new Paint();
-		paint.setFilterBitmap(true);
+		synchronized (this) {
+			if (! mIsReady) {
+				Log.v(TAG, "Surface " + this + " isn't ready.");
+				return;
+			}
 
-		Canvas canvas = null;
+			Rect dest = new Rect(0, 0, getWidth(), getHeight());
+			Paint paint = new Paint();
+			paint.setFilterBitmap(true);
 
-		try {
-			canvas = getHolder().lockCanvas();
-//			canvas.scale(1.0f, 1.0f);
-			canvas.drawBitmap(bm, null, dest, paint);
-		} catch (Exception e) {
-			Log.e(TAG, e.toString());
-		} finally {
-			if (canvas != null) {
-				getHolder().unlockCanvasAndPost(canvas);
+			Canvas canvas = null;
+
+			try {
+				canvas = getHolder().lockCanvas();
+	//			canvas.scale(1.0f, 1.0f);
+				canvas.drawBitmap(bm, null, dest, paint);
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				if (canvas != null) {
+					getHolder().unlockCanvasAndPost(canvas);
+				}
 			}
 		}
 	}
