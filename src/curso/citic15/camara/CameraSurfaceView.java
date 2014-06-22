@@ -9,13 +9,14 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+public class CameraSurfaceView extends SurfaceView implements
+		SurfaceHolder.Callback {
 
 	private final static String TAG = "CameraSurfaceView";
-	
+
 	private Camera.PreviewCallback mPreviewCallback = null;
 	private Camera mCamera;
-	
+
 	public CameraSurfaceView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		getHolder().addCallback(this);
@@ -39,7 +40,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 	public void surfaceCreated(SurfaceHolder holder) {
 		Log.v(TAG, "Surface " + this + " is created.");
 		mCamera = Camera.open(1);
-		
+
 		Camera.Parameters params = mCamera.getParameters();
 		List<Camera.Size> sizes = params.getSupportedPreviewSizes();
 		Camera.Size selected = sizes.get(0);

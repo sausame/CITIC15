@@ -37,7 +37,7 @@ public class BitmapSurfaceView extends SurfaceView implements
 		super(context);
 		init();
 	}
-	
+
 	private void init() {
 		getHolder().addCallback(this);
 		setZOrderOnTop(true);
@@ -66,7 +66,7 @@ public class BitmapSurfaceView extends SurfaceView implements
 
 	public void render(Bitmap bm) {
 		synchronized (this) {
-			if (! mIsReady) {
+			if (!mIsReady) {
 				Log.v(TAG, "Surface " + this + " isn't ready.");
 				return;
 			}
@@ -79,7 +79,7 @@ public class BitmapSurfaceView extends SurfaceView implements
 
 			try {
 				canvas = getHolder().lockCanvas();
-	//			canvas.scale(1.0f, 1.0f);
+				// canvas.scale(1.0f, 1.0f);
 				canvas.drawBitmap(bm, null, dest, paint);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -90,15 +90,15 @@ public class BitmapSurfaceView extends SurfaceView implements
 			}
 		}
 	}
-	
+
 	// -----------------------------------------------------------------------
 	// Dummy
 	// -----------------------------------------------------------------------
 	private int mCount = 0;
-	
+
 	public void dummyRender() {
 		int resId;
-		
+
 		if (0 == (++mCount / 10) % 2) {
 			resId = R.drawable.icon;
 		} else {
@@ -110,7 +110,4 @@ public class BitmapSurfaceView extends SurfaceView implements
 
 		render(bm);
 	}
-	
 }
-	
-

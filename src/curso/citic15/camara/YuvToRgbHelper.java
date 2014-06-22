@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -22,7 +21,7 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 
-public class YuvToRgbHelper extends Thread {
+public class YuvToRgbHelper {
 	private static final String TAG = "YuvToRgbHelper";
 
 	private static final boolean IS_TO_DUMP = false;
@@ -48,12 +47,7 @@ public class YuvToRgbHelper extends Thread {
 	private Allocation mInput = null;
 	private Allocation mOutput = null;
 
-	private boolean mIsTransforming = false;
-	private boolean mIsStopping = false;
-
 	private Context mContext = null;
-
-	private byte mYuv[] = null;
 
 	public void setWidth(int width) {
 		mWidth = width;
@@ -90,8 +84,6 @@ public class YuvToRgbHelper extends Thread {
 		initParams();
 
 		mIsInitialized = true;
-
-		start();
 	}
 
 	private void initParams17() {
@@ -149,41 +141,22 @@ public class YuvToRgbHelper extends Thread {
 		}
 	}
 
-	public void input(byte[] buffer) {
-		synchronized (this) {
-			if (mIsTransforming)
-				return;
-		}
-
-		if (IS_TO_DUMP) {
-			mYuv = Arrays.copyOf(buffer, buffer.length);
-		}
+	public Bitmap transform(byte[] buffer) {
+		// XXX: Starting a transform.
 
 		mInput.copyFrom(buffer);
-
-		synchronized (this) {
-			mIsTransforming = true;
-
-			notifyAll(); // Tell the thread there is new work to do.
-		}
-	}
-
-	public Bitmap getOutputBitmap() {
-		synchronized (this) {
-			if (mIsTransforming)
-				return null;
-
-			return mOutputBitmap;
-		}
-	}
-
-	private void transform() {
-		// Starting a transform.
 
 		mScript.setInput(mInput);
 		mScript.forEach(mOutput);
 
+		// XXX: A transform is completed.
+
+		// Output
 		mOutput.copyTo(mBitmap);
+
+		if (IS_TO_DUMP) {
+			saveBitmap(mBitmap, buffer);
+		}
 
 		if (null != mMatrix) {
 			mOutputBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
@@ -192,52 +165,7 @@ public class YuvToRgbHelper extends Thread {
 			mOutputBitmap = mBitmap;
 		}
 
-		if (IS_TO_DUMP) {
-			saveBitmap(mBitmap, mYuv);
-		}
-
-		// A transform is completed.
-
-		synchronized (this) {
-			mIsTransforming = false;
-		}
-	}
-
-	// Runs in saver thread
-	@Override
-	public void run() {
-		while (!mIsStopping) {
-			synchronized (this) {
-				while (!mIsTransforming && !mIsStopping) {
-					try {
-						wait();
-					} catch (InterruptedException ex) {
-						// ignore.
-					}
-				}
-			}
-
-			transform();
-		}
-		
-		synchronized (this) {
-			notifyAll(); // notify main thread in waitDone
-		}
-	}
-
-	// Runs in main thread
-	public void finish() {
-		// waitDone();
-		synchronized (this) {
-			mIsStopping = true;
-
-			notifyAll();
-		}
-
-		try {
-			join();
-		} catch (InterruptedException ex) {
-		}
+		return mOutputBitmap;
 	}
 
 	// -----------------------------------------------------------------------
