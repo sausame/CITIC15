@@ -67,16 +67,20 @@ public class SurfaceViewManager extends Thread implements
 
 		Bitmap bm = mYuvToRgbHelper.transform(mYuv);
 
+		long endTime = System.currentTimeMillis();
+
 		for (int i = 0; i < mSurfaceViewList.size(); i++) {
 			BitmapSurfaceView bsv = mSurfaceViewList.get(i);
 			if (null != bsv)
 				bsv.render(bm);
 		}
 
-		mIsTransforming = false;
+		synchronized (this) {
+			mIsTransforming = false;
+		}
 
-		Log.v(TAG, "Transform: " + (System.currentTimeMillis() - startTime)
-				+ "ms");
+		Log.v(TAG, "Transform: " + (endTime - startTime) + "ms, Render: "
+				+ (System.currentTimeMillis() - endTime) + "ms");
 	}
 
 	@Override
@@ -86,8 +90,9 @@ public class SurfaceViewManager extends Thread implements
 		init(frameByte, camera);
 		input(frameByte);
 
-		Log.v(TAG, "Preview Frame: " + (System.currentTimeMillis() - startTime)
-				+ "ms");
+		long endTime = System.currentTimeMillis();
+
+		Log.v(TAG, "Preview Frame: " + (endTime - startTime) + "ms");
 	}
 
 	// Runs in saver thread
